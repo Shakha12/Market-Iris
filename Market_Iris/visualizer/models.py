@@ -1,0 +1,20 @@
+from django.db import models
+
+class BankRecord(models.Model):
+    age = models.IntegerField()
+    job = models.CharField(max_length=50)
+    marital = models.CharField(max_length=50)
+    education = models.CharField(max_length=50)
+    default = models.CharField(max_length=3)
+    balance = models.IntegerField()
+    housing = models.CharField(max_length=3)
+    loan = models.CharField(max_length=3)
+    contact = models.CharField(max_length=50)
+    day = models.IntegerField()
+    month = models.CharField(max_length=10)
+    duration = models.IntegerField()
+    campaign = models.IntegerField()
+    pdays = models.IntegerField()
+    previous = models.IntegerField()
+    poutcome = models.CharField(max_length=50)
+    deposit = models.CharField(max_length=3)

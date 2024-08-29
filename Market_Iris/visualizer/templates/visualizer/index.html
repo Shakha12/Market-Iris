@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Market Iris</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 0;
+        }
+
+        h2 {
+            text-align: center;
+            color: #34495e;
+            margin-bottom: 40px;
+        }
+
+        .filter-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-container label {
+            margin-right: 10px;
+        }
+
+        .filter-container select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font-size: 14px;
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: left;
+            width: auto;
+            padding: 10px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            border-radius: 5px;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .axis-label {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .legend {
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: start;
+        }
+
+        .reset-button {
+            display: block;
+            margin: 0 auto 20px auto;
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .reset-button:hover {
+            background-color: #0056b3;
+        }
+
+        #chart, #bar-chart, #pie-chart {
+            margin-bottom: 40px;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .legend-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: inline-block;
+            margin: 0 10px;
+            text-align: left;
+        }
+
+        .legend-color-box {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <h1>The Market Iris</h1>
+    <h2>The number one platform to understand how effective your marketing campaign is!</h2>
+
+    <div class="filter-container">
+        <label for="job-filter">Job:</label>
+        <select id="job-filter">
+            <option value="all">All</option>
+        </select>
+
+        <label for="marital-filter">Marital Status:</label>
+        <select id="marital-filter">
+            <option value="all">All</option>
+        </select>
+    </div>
+
+    <button class="reset-button">Reset Filters</button>
+
+    <div id="chart">
+        <div class="chart-title">Age vs. Balance</div>
+    </div>
+
+    <div id="bar-chart">
+        <div class="chart-title">Job Distribution</div>
+    </div>
+
+    <div id="pie-chart">
+        <div class="chart-title">Marital Status Breakdown</div>
+    </div>
+
+    <div id="tooltip" class="tooltip" style="opacity: 0;"></div>
+
+    <script>
+        d3.json("/api/data/").then(function(data) {
+            const margin = { top: 20, right: 30, bottom: 50, left: 60 };
+            const width = 800 - margin.left - margin.right;
+            const height = 600 - margin.top - margin.bottom;
+
+            const svg = d3.select("#chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const xScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.age)])
+                .range([0, width]);
+
+            const yScale = d3.scaleLinear()
+                .domain([d3.min(data, d => d.balance), d3.max(data, d => d.balance)])
+                .range([height, 0]);
+
+            const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+            const tooltip = d3.select("#tooltip");
+
+            const jobs = Array.from(new Set(data.map(d => d.job)));
+            const maritalStatuses = Array.from(new Set(data.map(d => d.marital)));
+
+            jobs.forEach(job => {
+                d3.select("#job-filter").append("option").text(job).attr("value", job);
+            });
+
+            maritalStatuses.forEach(status => {
+                d3.select("#marital-filter").append("option").text(status).attr("value", status);
+            });
+
+            function updateScatterPlot(filteredData) {
+                svg.selectAll("*").remove();
+
+                const circles = svg.selectAll("circle")
+                    .data(filteredData)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", d => xScale(d.age))
+                    .attr("cy", d => yScale(d.balance))
+                    .attr("r", 5)
+                    .attr("fill", d => colorScale(d.job))
+                    .on("mouseover", function(event, d) {
+                        tooltip.style("opacity", 1)
+                            .html(`
+                                <strong>Age:</strong> ${d.age}<br>
+                                <strong>Balance:</strong> ${d.balance}<br>
+                                <strong>Job:</strong> ${d.job}<br>
+                                <strong>Marital Status:</strong> ${d.marital}<br>
+                                <strong>Education:</strong> ${d.education}<br>
+                                <strong>Loan:</strong> ${d.loan}<br>
+                                <strong>Deposit:</strong> ${d.deposit}
+                            `)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 28) + "px");
+                    })
+                    .on("mouseout", function() {
+                        tooltip.style("opacity", 0);
+                    });
+
+                circles.transition()
+                    .duration(1000)
+                    .attr("r", 7);
+
+                const legendData = Array.from(new Set(filteredData.map(d => d.job)));
+
+                d3.select(".legend-container").remove();
+                const legendContainer = d3.select("body")
+                    .append("div")
+                    .attr("class", "legend-container");
+
+                legendData.forEach(job => {
+                    legendContainer.append("div")
+                        .attr("class", "legend-item")
+                        .html(`
+                            <div class="legend-color-box" style="background-color: ${colorScale(job)};"></div>
+                            <span>${job}</span>
+                        `);
+                });
+            }
+
+            function updateBarChart(filteredData) {
+                d3.select("#bar-chart svg").remove();
+
+                const jobCounts = d3.rollup(filteredData, v => v.length, d => d.job);
+
+                const xScale = d3.scaleBand()
+                    .domain(Array.from(jobCounts.keys()))
+                    .range([0, width])
+                    .padding(0.1);
+
+                const yScale = d3.scaleLinear()
+                    .domain([0, d3.max(jobCounts, d => d[1])])
+                    .range([height, 0]);
+
+                const svgBarChart = d3.select("#bar-chart")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                svgBarChart.selectAll(".bar")
+                    .data(jobCounts)
+                    .enter()
+                    .append("rect")
+                    .attr("class", "bar")
+                    .attr("x", d => xScale(d[0]))
+                    .attr("y", d => yScale(d[1]))
+                    .attr("width", xScale.bandwidth())
+                    .attr("height", d => height - yScale(d[1]))
+                    .attr("fill", d => colorScale(d[0]));
+
+                svgBarChart.append("g")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(d3.axisBottom(xScale));
+
+                svgBarChart.append("g")
+                    .call(d3.axisLeft(yScale));
+            }
+
+            function updatePieChart(filteredData) {
+                d3.select("#pie-chart svg").remove();
+
+                const maritalCounts = d3.rollup(filteredData, v => v.length, d => d.marital);
+
+                const radius = Math.min(width, height) / 2;
+
+                const arc = d3.arc()
+                    .outerRadius(radius - 10)
+                    .innerRadius(0);
+
+                const pie = d3.pie()
+                    .sort(null)
+                    .value(d => d[1]);
+
+                const svgPieChart = d3.select("#pie-chart")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .append("g")
+                    .attr("transform", `translate(${width / 2},${height / 2})`);
+
+                const g = svgPieChart.selectAll(".arc")
+                    .data(pie(Array.from(maritalCounts)))
+                    .enter()
+                    .append("g")
+                    .attr("class", "arc");
+
+                g.append("path")
+                    .attr("d", arc)
+                    .style("fill", d => colorScale(d.data[0]));
+
+                g.append("text")
+                    .attr("transform", d => `translate(${arc.centroid(d)})`)
+                    .attr("dy", ".35em")
+                    .style("text-anchor", "middle")
+                    .text(d => d.data[0]);
+            }
+
+            function filterData() {
+                const selectedJob = d3.select("#job-filter").property("value");
+                const selectedMarital = d3.select("#marital-filter").property("value");
+
+                let filteredData = data;
+
+                if (selectedJob !== "all") {
+                    filteredData = filteredData.filter(d => d.job === selectedJob);
+                }
+
+                if (selectedMarital !== "all") {
+                    filteredData = filteredData.filter(d => d.marital === selectedMarital);
+                }
+
+                updateScatterPlot(filteredData);
+                updateBarChart(filteredData);
+                updatePieChart(filteredData);
+            }
+
+            d3.select(".reset-button").on("click", function() {
+                d3.select("#job-filter").property("value", "all");
+                d3.select("#marital-filter").property("value", "all");
+                updateScatterPlot(data);
+                updateBarChart(data);
+                updatePieChart(data);
+            });
+
+            updateScatterPlot(data);
+            updateBarChart(data);
+            updatePieChart(data);
+
+            d3.select("#job-filter").on("change", filterData);
+            d3.select("#marital-filter").on("change", filterData);
+        });
+    </script>
+</body>
+</html>
