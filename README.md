@@ -84,8 +84,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For any inquiries or feedback, please reach out to us at:
 
-- Shadrack Gicheru: [shadrack@example.com](mailto:gicherushadrack@gmail.com)
-- Francis Njoroge: [francis@example.com](mailto:frankmugo@gmail.com)
+- Shadrack Gicheru: [gicherushadrack@gmail.com](mailto:gicherushadrack@gmail.com)
+- Francis Njoroge: [frankmugo@gmail.com](mailto:frankmugo@gmail.com)
 
 ---
 
